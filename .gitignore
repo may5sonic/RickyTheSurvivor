@@ -9,9 +9,11 @@
 /[Bb]uild/
 /[Bb]uilds/
 /[Ll]ogs/
-[Mm]emoryCaptures/
 /[Uu]ser[Ss]ettings/
 *.log
+
+.plastic
+.plastic/
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
