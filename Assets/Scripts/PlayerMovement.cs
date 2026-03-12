@@ -1,13 +1,13 @@
 using UnityEngine;
 
-public class PlayerMovement3D : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    private Rigidbody rb; 
+    private Animator animator;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
 
     }
 
@@ -18,7 +18,15 @@ public class PlayerMovement3D : MonoBehaviour
 
         Vector3 movement = new Vector3(horizontal,0f,vertical);
 
-        rb.linearVelocity = movement * moveSpeed;
+        transform.Translate(movement * moveSpeed * Time.deltaTime);
 
+        float speed = movement.magnitude;
+
+        animator.SetFloat("Speed", speed);
+
+    }
+
+    public void FootStep() {
+        
     }
 }
