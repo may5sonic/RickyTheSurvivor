@@ -19,6 +19,13 @@ public class PlayerShoot : MonoBehaviour
 
     void Shoot()
     {
+        // firepoint check
+        if (firePoint == null)
+        {
+            Debug.LogWarning("FirePoint is not assigned!");
+            return;
+        }
+
         // Create a bullet at the firePoint position and rotation
         Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
     }
