@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    public float moveSpeed = 6f;
+    public float sprintMultiplier = 1.3f;
 
     public Transform cam;
 
@@ -11,6 +12,7 @@ public class PlayerMovement : MonoBehaviour
     //private Vector3 movement;
     private Vector3 moveDirection;
     private float targetAngle;
+    private bool isSprinting;
 
     void Start()
     {
@@ -28,7 +30,7 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 input = new Vector3(horizontal, 0f, vertical).normalized;
 
-        animator.SetFloat("Speed", input.magnitude);
+        animator.SetFloat("Speed", input.magnitude, 0.1f, Time.deltaTime);
 
         if (input.magnitude >= 0.1f)
         {
@@ -39,6 +41,10 @@ public class PlayerMovement : MonoBehaviour
         {
             moveDirection = Vector3.zero;
         }
+
+
+        isSprinting = Input.GetKey(KeyCode.LeftShift) && moveDirection.magnitude > 0.1f;
+        animator.SetBool("Sprint", isSprinting);
 
         // movement vector
         //movement = new Vector3(horizontal, 0f, vertical).normalized;
@@ -54,9 +60,17 @@ public class PlayerMovement : MonoBehaviour
         // Move player Rigidbody
         if (moveDirection.magnitude >= 0.1f)
         {
-            //Vector3 moveVelocity = movement * moveSpeed;
-            Vector3 moveVelocity = moveDirection.normalized * moveSpeed;
-            rb.MovePosition(rb.position + moveVelocity * Time.fixedDeltaTime);
+           
+            float currentSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+            Vector3 velocity = moveDirection.normalized * currentSpeed;
+
+            // keeps gravity / vertical velocity
+            velocity.y = rb.linearVelocity.y;
+
+            rb.linearVelocity = velocity;
+    
+            // Vector3 moveVelocity = moveDirection.normalized * currentSpeed; 
+            // rb.MovePosition(rb.position + moveVelocity * Time.fixedDeltaTime);
 
             // Rotate player towards movement direction if moving
             // if (movement != Vector3.zero)
