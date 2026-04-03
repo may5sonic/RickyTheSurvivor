@@ -7,10 +7,10 @@ public class EnemySpawner : MonoBehaviour
     public float spawnInterval = 2f;
     public int maxEnemies = 10;
     
-    public float minX = -8f;
-    public float maxX = 8f;
-    public float minZ = -8f;
-    public float maxZ = 8f;
+    public float minX = -20f;
+    public float maxX = 20f;
+    public float minZ = -20f;
+    public float maxZ = 20f;
 
     void Start()
     {

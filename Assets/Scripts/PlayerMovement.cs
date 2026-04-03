@@ -80,6 +80,10 @@ public class PlayerMovement : MonoBehaviour
             rb.MoveRotation(Quaternion.RotateTowards(transform.rotation, toRotation, 720f * Time.fixedDeltaTime));
             //}
         }
+        else
+        {
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        }
     }
 
     // for footstep sounds
