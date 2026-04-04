@@ -7,6 +7,14 @@ public class PlayerShoot : MonoBehaviour
     public TPSAimController aimController;
     public Camera aimCamera;
     public float maxAimDistance = 500f;
+    public LayerMask aimMask = ~0;
+
+    Transform cachedRoot;
+
+    void Awake()
+    {
+        cachedRoot = transform.root;
+    }
 
     void Update()
     {
@@ -26,37 +34,59 @@ public class PlayerShoot : MonoBehaviour
             return;
         }
 
-        Quaternion rotation = firePoint.rotation;
+        if (aimCamera == null) aimCamera = Camera.main;
+        if (aimCamera == null) return;
 
-        Transform target = aimController != null ? aimController.aimTarget : null;
-        if (target != null)
+        Vector3 aimPoint = GetAimPoint();
+
+        Vector3 directionToAim = (aimPoint - firePoint.position);
+        if (directionToAim.sqrMagnitude < 0.0001f) return;
+
+        if (Vector3.Dot(directionToAim, aimCamera.transform.forward) < 0f)
         {
-            Vector3 direction = (target.position - firePoint.position).normalized;
-            if (direction.sqrMagnitude > 0.0001f)
-            {
-                rotation = Quaternion.LookRotation(direction, Vector3.up);
-            }
-        }
-        else
-        {
-            if (aimCamera == null) aimCamera = Camera.main;
-
-            if (aimCamera != null)
-            {
-                Ray ray = aimCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-                Vector3 direction = ray.direction;
-                if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, ~0, QueryTriggerInteraction.Ignore))
-                {
-                    direction = (hit.point - firePoint.position).normalized;
-                }
-
-                if (direction.sqrMagnitude > 0.0001f)
-                {
-                    rotation = Quaternion.LookRotation(direction, Vector3.up);
-                }
-            }
+            aimPoint = firePoint.position + aimCamera.transform.forward * maxAimDistance;
+            directionToAim = (aimPoint - firePoint.position);
+            if (directionToAim.sqrMagnitude < 0.0001f) return;
         }
 
-        Instantiate(bulletPrefab, firePoint.position, rotation);
+        Quaternion rotation = Quaternion.LookRotation(directionToAim.normalized, Vector3.up);
+
+        GameObject bulletObject = Instantiate(bulletPrefab, firePoint.position, rotation);
+        BulletMovement bullet = bulletObject.GetComponent<BulletMovement>();
+        if (bullet != null)
+        {
+            bullet.SetDirection(directionToAim.normalized);
+        }
+    }
+
+    Vector3 GetAimPoint()
+    {
+        if (aimController != null && aimController.aimTarget != null)
+        {
+            Vector3 aimPoint = aimController.aimTarget.position;
+            if (Vector3.Dot(aimPoint - aimCamera.transform.position, aimCamera.transform.forward) > 0f)
+            {
+                return aimPoint;
+            }
+        }
+
+        Ray ray = aimCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        RaycastHit[] hits = Physics.RaycastAll(ray, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore);
+        if (hits != null && hits.Length > 0)
+        {
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider hitCollider = hits[i].collider;
+                if (hitCollider == null) continue;
+
+                Transform hitRoot = hitCollider.transform.root;
+                if (cachedRoot != null && hitRoot == cachedRoot) continue;
+
+                return hits[i].point;
+            }
+        }
+
+        return ray.origin + ray.direction * maxAimDistance;
     }
 }
