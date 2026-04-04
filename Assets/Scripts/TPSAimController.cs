@@ -6,11 +6,19 @@ using UnityEngine.InputSystem;
 
 public class TPSAimController : MonoBehaviour
 {
+    public enum ReticleMode
+    {
+        CenterScreen,
+        FreeCursor
+    }
+
     public Camera aimCamera;
     public Transform aimTarget;
 
     public Canvas canvas;
     public RectTransform crosshair;
+
+    public ReticleMode reticleMode = ReticleMode.CenterScreen;
 
     public bool lockCursor = true;
     public float sensitivity = 1f;
@@ -20,9 +28,11 @@ public class TPSAimController : MonoBehaviour
 
     public float aimDistance = 25f;
     public LayerMask aimMask = ~0;
+    public float aimTargetSmoothTime = 0.04f;
 
     Vector2 cursor01;
     RectTransform canvasRect;
+    Vector3 aimTargetVelocity;
 
     public Vector2 Cursor01 => cursor01;
     public Vector2 CursorPixels => new Vector2(cursor01.x * Screen.width, cursor01.y * Screen.height);
@@ -118,6 +128,12 @@ public class TPSAimController : MonoBehaviour
 
     void UpdateCursor()
     {
+        if (reticleMode == ReticleMode.CenterScreen)
+        {
+            cursor01 = new Vector2(0.5f, 0.5f);
+            return;
+        }
+
         Vector2 delta = GetMouseDelta();
         float safeWidth = Mathf.Max(1f, Screen.width);
         float safeHeight = Mathf.Max(1f, Screen.height);
@@ -129,6 +145,12 @@ public class TPSAimController : MonoBehaviour
     void UpdateCrosshairUI()
     {
         if (canvasRect == null || crosshair == null) return;
+
+        if (reticleMode == ReticleMode.CenterScreen)
+        {
+            crosshair.anchoredPosition = Vector2.zero;
+            return;
+        }
 
         Vector2 screenPoint = CursorPixels;
         Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -143,7 +165,7 @@ public class TPSAimController : MonoBehaviour
     {
         if (aimCamera == null || aimTarget == null) return;
 
-        Vector2 screenPoint = CursorPixels;
+        Vector2 screenPoint = reticleMode == ReticleMode.CenterScreen ? new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) : CursorPixels;
         Ray ray = aimCamera.ScreenPointToRay(screenPoint);
 
         Vector3 targetPos = ray.origin + ray.direction * aimDistance;
@@ -152,7 +174,13 @@ public class TPSAimController : MonoBehaviour
             targetPos = hit.point;
         }
 
-        aimTarget.position = targetPos;
+        if (aimTargetSmoothTime <= 0f)
+        {
+            aimTarget.position = targetPos;
+            return;
+        }
+
+        aimTarget.position = Vector3.SmoothDamp(aimTarget.position, targetPos, ref aimTargetVelocity, aimTargetSmoothTime);
     }
 
     static Vector2 GetMouseDelta()
