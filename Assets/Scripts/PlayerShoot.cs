@@ -55,7 +55,7 @@ public class PlayerShoot : MonoBehaviour
         BulletMovement bullet = bulletObject.GetComponent<BulletMovement>();
         if (bullet != null)
         {
-            bullet.SetDirection(directionToAim.normalized);
+            // bullet.SetDirection(directionToAim.normalized);
         }
     }
 
